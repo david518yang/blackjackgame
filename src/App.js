@@ -17,6 +17,7 @@ export default function App() {
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [gameOngoing, setGameOngoing] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
+  const [betStatusMessage, setBetStatusMessage] = useState("");
   const [playerChipCount, setPlayerChipCount] = useState(0);
   const [currentBet, setCurrentBet] = useState(null);
   const [outOfChips, setOutOfChips] = useState(false);
@@ -160,15 +161,15 @@ export default function App() {
 
   async function initializeCards() {
     if (currentBet <= 0 || !currentBet) {
-      setStatusMessage("Invalid bet amount! Must be greater than 0.");
+      setBetStatusMessage("Invalid bet amount! Must be greater than 0.");
       return;
     }
 
     if (currentBet > playerChipCount) {
-      setStatusMessage("Bet size is larger than your current stack!");
+      setBetStatusMessage("Bet size is larger than your current stack!");
       return;
     }
-    setStatusMessage("");
+    setBetStatusMessage("");
     setGameOngoing(true);
     setIsPlayerTurn(true);
     setPlayerChipCount((prevCount) => prevCount - currentBet);
@@ -234,12 +235,9 @@ export default function App() {
 
   return (
     <div className="App" id="gameTable">
-
-<header>
-<h1>Blackjack Game</h1>
-        
-    </header>
-      
+      <header>
+        <h1>Blackjack Game</h1>
+      </header>
 
       <p>{statusMessage}</p>
       <h2>Result: {gameResult}</h2>
@@ -310,6 +308,7 @@ export default function App() {
               <Button action={initializeCards} name="Deal" />
             </>
           )}
+          <p>{betStatusMessage}</p>
           {outOfChips == true && <Button action={shuffle} name="Shuffle" />}
         </>
       )}
