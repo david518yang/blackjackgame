@@ -19,6 +19,7 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState("");
   const [playerChipCount, setPlayerChipCount] = useState(0);
   const [currentBet, setCurrentBet] = useState(null);
+  const [outOfChips, setOutOfChips] = useState(false);
 
   useEffect(() => {
     if (
@@ -34,6 +35,7 @@ export default function App() {
       });
     } else if (userCards.length === 2 && hasBlackjack(userCards)) {
       setIsDealerCardHidden(false);
+      console.log("player has blackjack");
       gameEnd({
         result: "Player has Blackjack! Player wins!",
         currentUserCards: userCards,
@@ -41,6 +43,7 @@ export default function App() {
       });
     } else if (dealerCards.length === 2 && hasBlackjack(dealerCards)) {
       setIsDealerCardHidden(false);
+      console.log("dealer has blackjack");
       gameEnd({
         result: "Dealer has Blackjack! Dealer wins!",
         currentUserCards: userCards,
@@ -54,7 +57,10 @@ export default function App() {
         currentUserCards: userCards,
         currentDealerCards: dealerCards
       });
-    } else if (calculateHandValue(userCards) === 21) {
+    } else if (
+      calculateHandValue(userCards) === 21 &&
+      !hasBlackjack(userCards)
+    ) {
       stand(dealerCards);
     }
 
@@ -70,6 +76,12 @@ export default function App() {
         currentDealerCards: dealerCards
       });
     }
+  }, [userCards, dealerCards, isPlayerTurn]);
+
+  useEffect(() => {
+    if (gameResult == "") {
+      return;
+    }
     if (gameResult.includes("Player has Blackjack")) {
       setPlayerChipCount((prevCount) => prevCount + 2.5 * currentBet);
     } else if (gameResult.includes("Player wins")) {
@@ -77,10 +89,11 @@ export default function App() {
     } else if (gameResult.includes("tie")) {
       setPlayerChipCount((prevCount) => prevCount + currentBet);
     }
-  }, [userCards, dealerCards, isPlayerTurn, gameResult]);
+  }, [gameResult]);
 
   async function shuffle() {
     setPlayerChipCount(1000);
+    setOutOfChips(false);
     setGameOngoing(false);
     try {
       const response = await fetch(`${API_URL}/new/shuffle/?deck_count=6`);
@@ -124,6 +137,10 @@ export default function App() {
     }
   }
 
+  function allIn() {
+    setCurrentBet(playerChipCount);
+  }
+
   async function dealerDraw() {
     let currentDealerCards = [...dealerCards];
     while (calculateHandValue(currentDealerCards) < 17) {
@@ -142,7 +159,7 @@ export default function App() {
   }
 
   async function initializeCards() {
-    if (currentBet <= 0) {
+    if (currentBet <= 0 || !currentBet) {
       setStatusMessage("Invalid bet amount! Must be greater than 0.");
       return;
     }
@@ -199,24 +216,35 @@ export default function App() {
   function gameEnd({ result, currentUserCards, currentDealerCards }) {
     console.log("==gameend==");
     setIsDealerCardHidden(false);
+    let tempResult = "";
     if (!result) {
-      setGameResult(determineWinner(currentUserCards, currentDealerCards));
+      tempResult = determineWinner(currentUserCards, currentDealerCards);
+      if (tempResult.includes("Dealer wins") && playerChipCount === 0) {
+        setOutOfChips(true);
+      }
+      setGameResult(tempResult);
     } else {
+      if (result.includes("Dealer wins") && playerChipCount === 0) {
+        setOutOfChips(true);
+      }
       setGameResult(result);
     }
-
     setGameOngoing(false);
   }
 
   return (
-    <div className="App">
-      <h1>Blackjack Game</h1>
+    <div className="App" id="gameTable">
 
+<header>
+<h1>Blackjack Game</h1>
+        
+    </header>
       
+
       <p>{statusMessage}</p>
       <h2>Result: {gameResult}</h2>
 
-      <div>
+      <div id="dealerZone">
         <h2>Dealer's Cards:</h2>
         <div className="card-container">
           <div className="cards">
@@ -239,7 +267,7 @@ export default function App() {
         </div>
       </div>
 
-      <div>
+      <div id="playerZone">
         <h2>Player's Cards:</h2>
         <div className="card-container">
           <div className="cards">
@@ -252,10 +280,8 @@ export default function App() {
         </div>
       </div>
 
-
-
       <h4>Current Bet: {currentBet}</h4>
-      
+
       {gameOngoing ? (
         <>
           <Button action={shuffle} name="Shuffle" />
@@ -270,22 +296,25 @@ export default function App() {
         <Button action={clear} name="Clear" />
       ) : (
         <>
-          <input
-            type="number"
-            value={currentBet}
-            onChange={(e) => setCurrentBet(parseInt(e.target.value))}
-            placeholder="Enter Bet Amount"
-          />
-          <Button action={initializeCards} name="Deal" />
-          {playerChipCount <= 0 && (
+          {outOfChips ? (
             <p>You ran out of chips! Shuffle to restart.</p>
+          ) : (
+            <>
+              <input
+                type="number"
+                value={currentBet}
+                onChange={(e) => setCurrentBet(parseInt(e.target.value))}
+                placeholder="Enter Bet Amount"
+              />
+              <Button action={allIn} name="All In" />
+              <Button action={initializeCards} name="Deal" />
+            </>
           )}
+          {outOfChips == true && <Button action={shuffle} name="Shuffle" />}
         </>
       )}
 
-
       <h4>Chip Count: {playerChipCount}</h4>
-
     </div>
   );
 }
