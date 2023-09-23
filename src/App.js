@@ -15,7 +15,8 @@ export default function App() {
   const [gameResult, setGameResult] = useState("");
   const [isDealerCardHidden, setIsDealerCardHidden] = useState(true);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
-  const [gameOngoing, setGameOngoing] = useState(true);
+  const [gameOngoing, setGameOngoing] = useState(false);
+  const [gameJustStarting, setGameJustStarting] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const [betStatusMessage, setBetStatusMessage] = useState("");
   const [playerChipCount, setPlayerChipCount] = useState(0);
@@ -77,6 +78,10 @@ export default function App() {
         currentDealerCards: dealerCards
       });
     }
+
+    if (calculateHandValue(userCards) === 11 && userCards.length === 2) {
+      canDouble = true;
+    }
   }, [userCards, dealerCards, isPlayerTurn]);
 
   useEffect(() => {
@@ -93,6 +98,8 @@ export default function App() {
   }, [gameResult]);
 
   async function shuffle() {
+    clear();
+    setGameJustStarting(false);
     setPlayerChipCount(1000);
     setOutOfChips(false);
     setGameOngoing(false);
@@ -169,6 +176,7 @@ export default function App() {
       setBetStatusMessage("Bet size is larger than your current stack!");
       return;
     }
+    setGameJustStarting(false);
     setBetStatusMessage("");
     setGameOngoing(true);
     setIsPlayerTurn(true);
@@ -191,20 +199,34 @@ export default function App() {
     console.log("==hit==");
     const drawnCard = await drawCards(1, "user");
     const newUserCards = [...userCards, ...drawnCard];
+    setBetStatusMessage("");
     setUserCards(newUserCards);
   }
 
-  async function stand(currentDealerCards) {
+  async function stand() {
     console.log("==stand==");
     setIsPlayerTurn(false);
+    setBetStatusMessage("");
     setIsDealerCardHidden(false);
     await dealerDraw();
+  }
+
+  async function double() {
+    console.log("==double==");
+    if (currentBet > playerChipCount) {
+      setBetStatusMessage("Not enough chips to double");
+      return;
+    }
+    setCurrentBet(currentBet * 2);
+    hit();
+    stand();
   }
 
   function clear() {
     setUserCards([]);
     setDealerCards([]);
     setGameResult("");
+    setBetStatusMessage("");
     setIsDealerCardHidden(true);
     setGameOngoing(false);
     setCurrentBet(null);
@@ -279,14 +301,15 @@ export default function App() {
       </div>
 
       <h4>Current Bet: {currentBet}</h4>
-
-      {gameOngoing ? (
+      {gameJustStarting && <Button action={shuffle} name="Shuffle" />}
+      {!gameJustStarting && gameOngoing ? (
         <>
-          <Button action={shuffle} name="Shuffle" />
+          {/* <Button action={shuffle} name="Shuffle" /> */}
           {gameResult === "" && (
             <>
               <Button action={hit} name="Hit" />
               <Button action={() => stand(dealerCards)} name="Stand" />
+              <Button action={double} name="Double" />
             </>
           )}
         </>
@@ -296,7 +319,7 @@ export default function App() {
         <>
           {outOfChips ? (
             <p>You ran out of chips! Shuffle to restart.</p>
-          ) : (
+          ) : !gameJustStarting ? (
             <>
               <input
                 type="number"
@@ -307,11 +330,13 @@ export default function App() {
               <Button action={allIn} name="All In" />
               <Button action={initializeCards} name="Deal" />
             </>
+          ) : (
+            <></>
           )}
-          <p>{betStatusMessage}</p>
           {outOfChips == true && <Button action={shuffle} name="Shuffle" />}
         </>
       )}
+      <p>{betStatusMessage}</p>
 
       <h4>Chip Count: {playerChipCount}</h4>
     </div>
