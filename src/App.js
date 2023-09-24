@@ -20,6 +20,7 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState("");
   const [betStatusMessage, setBetStatusMessage] = useState("");
   const [playerChipCount, setPlayerChipCount] = useState(0);
+  const [cardsRemaining, setCardsRemaining] = useState(0);
   const [currentBet, setCurrentBet] = useState(null);
   const [outOfChips, setOutOfChips] = useState(false);
 
@@ -31,7 +32,7 @@ export default function App() {
     ) {
       setIsDealerCardHidden(false);
       gameEnd({
-        result: "Both have Blackjack!🤯 It's a tie!",
+        result: "Both have Blackjack! 🤯 It's a tie!",
         currentUserCards: userCards,
         currentDealerCards: dealerCards
       });
@@ -78,10 +79,6 @@ export default function App() {
         currentDealerCards: dealerCards
       });
     }
-
-    if (calculateHandValue(userCards) === 11 && userCards.length === 2) {
-      canDouble = true;
-    }
   }, [userCards, dealerCards, isPlayerTurn]);
 
   useEffect(() => {
@@ -108,6 +105,7 @@ export default function App() {
       const data = await response.json();
       setDeckId(data.deck_id);
       setStatusMessage(`Shuffling deck ${data.deck_id}...`);
+      setCardsRemaining(data.remaining)
       setTimeout(() => {
         setStatusMessage(`Playing with deck ${data.deck_id}`);
       }, 500);
@@ -127,7 +125,7 @@ export default function App() {
         `${API_URL}/${deckId}/draw/?count=${numCards}`
       );
       const data = await response.json();
-
+      setCardsRemaining(data.remaining)
       const drawn = data.cards.map((card, index) => ({
         ...card,
         uniqueId: `${card.code}_${Date.now()}_${index}`
@@ -262,7 +260,9 @@ export default function App() {
       </header>
 
       <p>{statusMessage}</p>
+      <p>Cards Remaining: {cardsRemaining}</p>
       <h2>Result: {gameResult}</h2>
+      {gameResult.includes("🤯") && <img src="https://i.ytimg.com/vi/RzCxKSpj98g/sddefault.jpg" width={250} height={250}/>}
 
       <div id="dealerZone">
         <h2>Dealer's Cards:</h2>
