@@ -30,7 +30,7 @@ export default function App() {
   const [currentBet1, setCurrentBet1] = useState(null);
   const [currentBet2, setCurrentBet2] = useState(null);
   const [currentBet3, setCurrentBet3] = useState(null);
-  const [outOfChips, setOutOfChips] = useState(false);
+  const [outOfChips, setOutOfChips] = useState(true);
 
   useEffect(() => {
     console.log("game1 useeffect")
@@ -40,7 +40,7 @@ export default function App() {
         hasBlackjack(user1Cards) &&
         hasBlackjack(dealerCards)
       ) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         gameEnd({
           result: "Both have Blackjack! 🤯 It's a tie!",
           currentUser1Cards: user1Cards,
@@ -48,7 +48,7 @@ export default function App() {
           user: "user1"
         });
       } else if (user1Cards.length === 2 && hasBlackjack(user1Cards)) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         console.log("player has blackjack");
         gameEnd({
           result: "Player has Blackjack! Player wins!",
@@ -57,7 +57,7 @@ export default function App() {
           user: "user1"
         });
       } else if (dealerCards.length === 2 && hasBlackjack(dealerCards)) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         console.log("dealer has blackjack");
         gameEnd({
           result: "Dealer has Blackjack! Dealer wins!",
@@ -106,7 +106,7 @@ export default function App() {
         hasBlackjack(user2Cards) &&
         hasBlackjack(dealerCards)
       ) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         gameEnd({
           result: "Both have Blackjack! 🤯 It's a tie!",
           currentUser2Cards: user2Cards,
@@ -114,7 +114,7 @@ export default function App() {
           user: "user2"
         });
       } else if (user2Cards.length === 2 && hasBlackjack(user2Cards)) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         console.log("player has blackjack");
         gameEnd({
           result: "Player has Blackjack! Player wins!",
@@ -123,7 +123,7 @@ export default function App() {
           user: "user2"
         });
       } else if (dealerCards.length === 2 && hasBlackjack(dealerCards)) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         console.log("dealer has blackjack");
         gameEnd({
           result: "Dealer has Blackjack! Dealer wins!",
@@ -172,7 +172,7 @@ export default function App() {
         hasBlackjack(user3Cards) &&
         hasBlackjack(dealerCards)
       ) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         gameEnd({
           result: "Both have Blackjack! 🤯 It's a tie!",
           currentUser3Cards: user3Cards,
@@ -180,7 +180,7 @@ export default function App() {
           user: "user3"
         });
       } else if (user3Cards.length === 2 && hasBlackjack(user3Cards)) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         console.log("player has blackjack");
         gameEnd({
           result: "Player has Blackjack! Player wins!",
@@ -189,7 +189,7 @@ export default function App() {
           user: "user3"
         });
       } else if (dealerCards.length === 2 && hasBlackjack(dealerCards)) {
-        setIsDealerCardHidden(false);
+        if(!gameOngoing){setIsDealerCardHidden(false);}
         console.log("dealer has blackjack");
         gameEnd({
           result: "Dealer has Blackjack! Dealer wins!",
@@ -277,7 +277,6 @@ export default function App() {
     setGameJustStarting(false);
     setPlayerChipCount(1000);
     setOutOfChips(false);
-    setGameOngoing(false);
     try {
       const response = await fetch(`${API_URL}/new/shuffle/?deck_count=6`);
       const data = await response.json();
@@ -348,6 +347,7 @@ export default function App() {
   }
 
   async function dealerDraw() {
+    setIsDealerCardHidden(false)
     let currentDealerCards = [...dealerCards];
     while (calculateHandValue(currentDealerCards) < 17) {
       const drawnCards = await drawCards(1, "dealer");
@@ -370,14 +370,12 @@ export default function App() {
       return;
     }
 
-    setGameJustStarting(false);
     setBetStatusMessage("");
     setGameOngoing(true);
-    setPlayerChipCount((prevCount) => prevCount - (currentBet1||0+currentBet2||0+currentBet3||0));
+    setPlayerChipCount((prevCount) => prevCount - ((currentBet1||0)+(currentBet2||0)+(currentBet3||0)));
 
     console.log("Starting initialization...");
     if(currentBet1){
-      setIsPlayer1Turn(true);
       await drawCards(1, "user1")
       console.log("Drew 1 card for user1.");
       await delay(500);
@@ -408,10 +406,49 @@ export default function App() {
           await delay(500);
         }
       }
+      await drawCards(1,"dealer")
       console.log("Drew 1 card for dealer");
+      setIsPlayer1Turn(true);
+    } else if (currentBet2){
+      await drawCards(1, "user2")
+      console.log("Drew 1 card for user2.");
+      await delay(500);
+      if(currentBet3){
+        await drawCards(1,"user3")
+        console.log("Drew 1 card for user3.");
+        await delay(500);
+      }
+      await drawCards(1,"dealer")
+      console.log("Drew 1 card for dealer.");
+      await delay(500);
 
+      await drawCards(1,"user2")
+      console.log("Drew 1 card for user2.");
+      await delay(500);
+      if(currentBet3){
+        await drawCards(1,"user3")
+        console.log("Drew 1 card for user3.");
+        await delay(500);
+      }
+      await drawCards(1,"dealer")
+      console.log("Drew 1 card for dealer");
+      setIsPlayer2Turn(true);
+    } else if (currentBet3){
+      await drawCards(1, "user3")
+      console.log("Drew 1 card for user2.");
+      await delay(500);
+      await drawCards(1,"dealer")
+      console.log("Drew 1 card for dealer.");
+      await delay(500);
+      await drawCards(1,"user3")
+      console.log("Drew 1 card for user3.");
+      await delay(500);
+      await drawCards(1,"dealer")
+      console.log("Drew 1 card for dealer");
+      setIsPlayer3Turn(true);
     }
   }
+  
 
   async function hit(user) {
     console.log("==hit==");
@@ -436,14 +473,17 @@ export default function App() {
     if(user==="user1"){
       setIsPlayer1Turn(false)
       setIsPlayer2Turn(true)
+      return
     } else if(user==="user2"){
       setIsPlayer2Turn(false)
       setIsPlayer3Turn(true)
+      return
     } else if(user==="user3"){
       setIsPlayer3Turn(false)
+      return
     }
     setBetStatusMessage("");
-    setIsDealerCardHidden(false);
+    if(!gameOngoing){setIsDealerCardHidden(false);}
     await dealerDraw();
   }
 
@@ -455,18 +495,21 @@ export default function App() {
         return;
       }
       setCurrentBet1(currentBet1 * 2);
+      setPlayerChipCount((prevCount) => prevCount-currentBet1)
     } else if(user==="user2"){
       if(currentBet2>playerChipCount){
         setBetStatusMessage("Not enough chips to double");
         return;
       }
       setCurrentBet2(currentBet2 * 2);
+      setPlayerChipCount((prevCount) => prevCount-currentBet2)
     } else if(user==="user3"){
       if(currentBet3>playerChipCount){
         setBetStatusMessage("Not enough chips to double");
         return;
       }
       setCurrentBet3(currentBet3 * 2);
+      setPlayerChipCount((prevCount) => prevCount-currentBet3)
     }
 
     hit(user);
@@ -495,7 +538,7 @@ export default function App() {
 
   function gameEnd({ result, currentUserCards, currentDealerCards, user }) {
     console.log("==gameend==");
-    setIsDealerCardHidden(false);
+    // setIsDealerCardHidden(false);
     let tempResult = "";
     if (!result) {
       tempResult = determineWinner(currentUserCards, currentDealerCards);
@@ -533,9 +576,25 @@ export default function App() {
         setIsPlayer3Turn(false)
       }
     }
-    setGameOngoing(false);
+    if(currentBet1){
+      if(currentBet2){
+        if(currentBet3){
+          if(game3Result){setGameOngoing(false)}
+        }
+        if(game2Result){setGameOngoing(false)}
+      }
+      if(game1Result){setGameOngoing(false)}
+    } else if(currentBet2){
+      if(currentBet3){
+        if(game3Result){setGameOngoing(false)}
+      }
+      if(game2Result){setGameOngoing(false)}
+    } else if (currentBet3){
+      if(game3Result){setGameOngoing(false)}
+    }
   }
 
+  console.log('return')
   return (
     <div className="App" id="gameTable">
       <header>
@@ -581,7 +640,8 @@ export default function App() {
               ))}
             </div>
           </div>
-          <h4>Current Bet: {currentBet1}</h4>
+          {currentBet1 && <h4>Current Bet: {currentBet1}</h4>}
+          
 
           {!gameJustStarting && gameOngoing && isPlayer1Turn ? (
             <>
@@ -595,17 +655,20 @@ export default function App() {
             </>
           ) : (
             <>
-              <input
-                type="number"
-                value={currentBet1}
-                onChange={(e) => setCurrentBet1(parseInt(e.target.value))}
-                placeholder="Enter Bet Amount"
-              />
-              <Button action={allIn(1)} name="All In" />
-              <Button action={initializeCards} name="Deal" />
+              {!gameJustStarting && !gameOngoing && 
+                (<>
+                <input
+                  type="number"
+                  value={currentBet1}
+                  onChange={(e) => setCurrentBet1(parseInt(e.target.value))}
+                  placeholder="Enter Bet Amount"
+                />
+                <Button action={() => allIn(1)} name="All In" />
+              </>)
+              }
             </>
-
           )}
+          {game1Result && {game1Result}}
         </div>
 
         <div className="player2Zone">
@@ -619,7 +682,7 @@ export default function App() {
               ))}
             </div>
           </div>
-          <h4>Current Bet: {currentBet2}</h4>
+          {currentBet2 && <h4>Current Bet: {currentBet2}</h4>}
 
           {!gameJustStarting && gameOngoing && isPlayer2Turn ? (
             <>
@@ -633,16 +696,18 @@ export default function App() {
             </>
           ) : (
             <>
-              <input
-                type="number"
-                value={currentBet2}
-                onChange={(e) => setCurrentBet2(parseInt(e.target.value))}
-                placeholder="Enter Bet Amount"
-              />
-              <Button action={allIn(2)} name="All In" />
+              {!gameJustStarting && !gameOngoing && (<>
+                <input
+                  type="number"
+                  value={currentBet2}
+                  onChange={(e) => setCurrentBet2(parseInt(e.target.value))}
+                  placeholder="Enter Bet Amount"
+                />
+                <Button action={() => allIn(2)} name="All In" />
+              </>)}
             </>
-
           )}
+          {game2Result && {game2Result}}
         </div>
 
         <div className="player3Zone">
@@ -656,7 +721,7 @@ export default function App() {
               ))}
             </div>
           </div>
-          <h4>Current Bet: {currentBet3}</h4>
+          {currentBet3 && <h4>Current Bet: {currentBet3}</h4>}
 
           {!gameJustStarting && gameOngoing && isPlayer3Turn ? (
             <>
@@ -670,26 +735,29 @@ export default function App() {
             </>
           ) : (
             <>
-              <input
+              {!gameJustStarting && !gameOngoing && (<>
+                <input
                 type="number"
                 value={currentBet3}
                 onChange={(e) => setCurrentBet3(parseInt(e.target.value))}
                 placeholder="Enter Bet Amount"
-              />
-              <Button action={allIn(3)} name="All In" />
+                />
+                <Button action={() => allIn(3)} name="All In" />
+              </>)}
             </>
           )}
+          {game3Result && {game3Result}}
         </div>
       </div>
 
-      {!gameOngoing && <Button action={initializeCards} name="Deal" />}
+      {!gameJustStarting&&!gameOngoing && <Button action={initializeCards} name="Deal" />}
       {((user1Cards&&game1Result) || (user2Cards&&game2Result) || (user3Cards&&game3Result)) && (
         <Button action={clear} name="Clear"/>
       )}
       
       {gameJustStarting && <Button action={shuffle} name="Shuffle" />}
       
-      {outOfChips &&
+      {!gameJustStarting && outOfChips &&
         <>
           <p>You ran out of chips! Shuffle to restart.</p>
           <Button action={shuffle} name="Shuffle" />
