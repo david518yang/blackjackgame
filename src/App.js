@@ -242,7 +242,7 @@ export default function App() {
     } else if (game1Result.includes("tie")) {
       setPlayerChipCount((prevCount) => prevCount + currentBet1);
     }
-  }, [game1Result, currentBet1]);
+  }, [game1Result]);
 
   useEffect(() => {
     console.log("bet payout useeffect game2")
@@ -256,7 +256,7 @@ export default function App() {
     } else if (game2Result.includes("tie")) {
       setPlayerChipCount((prevCount) => prevCount + currentBet2);
     }
-  }, [game2Result, currentBet2]);
+  }, [game2Result]);
 
   useEffect(() => {
     console.log("bet payout useeffect game3")
@@ -270,7 +270,7 @@ export default function App() {
     } else if (game3Result.includes("tie")) {
       setPlayerChipCount((prevCount) => prevCount + currentBet3);
     }
-  }, [game3Result, currentBet3]);
+  }, [game3Result]);
 
   async function shuffle() {
     clear();
@@ -480,7 +480,6 @@ export default function App() {
       return
     } else if(user==="user3"){
       setIsPlayer3Turn(false)
-      return
     }
     setBetStatusMessage("");
     if(!gameOngoing){setIsDealerCardHidden(false);}
